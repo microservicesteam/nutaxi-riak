@@ -10,12 +10,14 @@ import com.basho.riak.client.core.query.Location;
 import com.basho.riak.client.core.query.Namespace;
 import com.basho.riak.client.core.query.RiakObject;
 import com.basho.riak.client.core.util.BinaryValue;
-import com.msteam.riak.NuRiakCluster;
+import com.msteam.aws.NuAwsServerArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
+
+import static com.basho.riak.client.core.RiakNode.Builder.buildNodes;
 
 public class DemoApplication {
 
@@ -23,7 +25,7 @@ public class DemoApplication {
     private RiakNode.Builder riakNodeBuilder;
 
     @Autowired
-    private NuRiakCluster nuRiakCluster;
+    private NuAwsServerArray nuRiakCluster;
 
     private static Logger LOG = LoggerFactory.getLogger(DemoApplication.class);
 
@@ -32,7 +34,7 @@ public class DemoApplication {
     private RiakClient riakClient;
 
     public DemoApplication() {
-        List<RiakNode> nodes = RiakNode.Builder.buildNodes(riakNodeBuilder, nuRiakCluster.discoverRiakClusterInstancePublicIps());
+        List<RiakNode> nodes = buildNodes(riakNodeBuilder, nuRiakCluster.discoverPublicIps());
         riakCluster = new RiakCluster.Builder(nodes).build();
         riakClient = new RiakClient(riakCluster);
     }
@@ -43,16 +45,14 @@ public class DemoApplication {
     }
 
     public void run() throws Exception {
-        nuRiakCluster.startRiakCluster();
-        nuRiakCluster.pollRiakClusterStarted();
+        nuRiakCluster.start();
         riakCluster.start();
 
         writeAValueToRiakCluster();
         readAValueFromRiakCluster();
 
         riakCluster.shutdown();
-        nuRiakCluster.stopRiakCluster();
-        nuRiakCluster.pollRiakClusterStopped();
+        nuRiakCluster.stop();
     }
 
     private void writeAValueToRiakCluster() throws Exception {
@@ -65,6 +65,7 @@ public class DemoApplication {
                 .withLocation(location)
                 .withOption(StoreValue.Option.W, new Quorum(3)).build();
         riakClient.execute(store);
+
         LOG.info("Written 'my_value' into riak");
     }
 
