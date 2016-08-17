@@ -32,7 +32,7 @@ public class NuServerConfig {
 
     @Bean
     public NuAwsServerArray getNuAwsServerArray() {
-        return new NuAwsServerArray(getAmazonEC2Client(), getInstanceFilterForRiak());
+        return new NuAwsServerArray(getAmazonEC2Client(), getInstanceFilterForRiak(), 10);
     }
 
 }
